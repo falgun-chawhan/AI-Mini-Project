@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}Smart Matching - Smart Donation Distribution{% endblock %}
+
+{% block content %}
+<!-- Hero: the rule engine result summary -->
+<div class="match-hero mb-4">
+  <h2><i class="bi bi-cpu"></i> Smart Matching</h2>
+  <p>The IF&ndash;THEN rule engine evaluated every donation&ndash;request pair and ranked the
+     compatible ones below. Nothing is saved until you review the list and press
+     <strong>Confirm Allocations</strong>.</p>
+  <div class="hero-badges">
+    {% if recommendations %}
+      <span class="hero-chip"><i class="bi bi-lightbulb"></i>
+        {{ recommendations|length }} recommendation{{ 's' if recommendations|length != 1 }}</span>
+      <span class="hero-chip"><i class="bi bi-check2-square"></i>
+        {{ recommendations|rejectattr('requires_verification')|list|length }} ready to confirm</span>
+      <span class="hero-chip"><i class="bi bi-shield-check"></i>
+        {{ recommendations|selectattr('requires_verification')|list|length }} need verification</span>
+    {% endif %}
+    {% if skipped %}
+      <span class="hero-chip"><i class="bi bi-slash-circle"></i>
+        {{ skipped|length }} pair{{ 's' if skipped|length != 1 }} rejected by rules</span>
+    {% endif %}
+    <span class="hero-chip"><i class="bi bi-clock"></i> deterministic ranking</span>
+  </div>
+</div>
+
+{% if recommendations %}
+<form method="post" action="{{ url_for('matching_confirm') }}" id="confirmForm">
+
+  <!-- Ranked recommendations -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <i class="bi bi-list-ol"></i> Ranked Recommendations
+      <span class="card-sub">Rule 2 (urgency) &rarr; Rule 5 (beneficiaries) &rarr; Rule 4 (quantity)</span>
+    </div>
+    <div class="card-body">
+
+      {% for rec in recommendations %}
+      <article class="rec-card urgency-{{ rec.urgency }}
+                      {% if rec.requires_verification %}needs-verification{% endif %}">
+
+        <div class="rec-head">
+          <div class="rec-rank" aria-hidden="true">{{ loop.index }}</div>
+
+          <div class="rec-main">
+            <p class="rec-route">
+              <span class="qty">{{ rec.quantity }}</span>&times; {{ rec.donation_item }}
+              <span class="arrow">&rarr;</span>
+              {{ rec.recipient_name }}
+            </p>
+
+            <div class="rec-meta">
+              <span class="form-check d-inline-flex align-items-center gap-1 me-1" style="margin:0">
+                <input class="form-check-input" type="checkbox"
+                       name="recommendation"
+                       value="{{ rec.donation_id }}:{{ rec.request_id }}:{{ rec.quantity }}"
+                       id="rec{{ loop.index }}"
+                       {% if not rec.requires_verification %}checked{% endif %}>
+                <label class="form-check-label" for="rec{{ loop.index }}">Include</label>
+              </span>
+              <span class="badge badge-urgency-{{ rec.urgency }}">
+                <i class="bi bi-flag-fill me-1"></i>{{ rec.urgency }}</span>
+              <span class="badge badge-category">{{ rec.category }}</span>
+              <span class="badge badge-category">{{ rec.request_item }}</span>
+              {% if rec.requires_verification %}
+                <span class="badge badge-verify"><i class="bi bi-shield-exclamation me-1"></i>
+                  Needs verification</span>
+              {% endif %}
+              <span>Donor: {{ rec.donor_name }}</span>
+            </div>
+
+            {% if rec.requires_verification %}
+              <p class="small text-muted mt-1 mb-0">
+                Rule 3: medicines are never allocated automatically &mdash; tick
+                &ldquo;Include&rdquo; only after an authorized person has verified this donation.
+              </p>
+            {% endif %}
+          </div>
+
+          <div class="rec-qty" aria-label="Allocation quantity">
+            <div class="amount">{{ rec.quantity }}</div>
+            <div class="amount-label">units</div>
+          </div>
+        </div>
+
+        <!-- Expandable explanation: which rules fired and why (Rule 6) -->
+        <details class="rule-details">
+          <summary>
+            <span class="chev"><i class="bi bi-chevron-right"></i></span>
+            Why this pair? Show the {{ rec.explanation|length }} triggered rule{{ 's' if rec.explanation|length != 1 }}
+          </summary>
+          <ul class="rule-list">
+            {% for reason in rec.explanation %}
+              <li class="{% if 'requires' in reason or 'BLOCKED' in reason %}is-warning{% endif %}">
+                <i class="bi {% if 'requires' in reason or 'BLOCKED' in reason %}
+                   bi-exclamation-triangle{% else %}bi-check-circle{% endif %}"></i>
+                <span>{{ reason }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        </details>
+      </article>
+      {% endfor %}
+
+      <!-- Confirmation bar (sticky on desktop) -->
+      <div class="confirm-bar">
+        <span class="confirm-note">
+          <strong>Nothing is saved yet.</strong>
+          Confirming writes all ticked pairs in one database transaction and
+          updates quantities and statuses automatically.
+        </span>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-soft">Cancel</a>
+        <button type="submit" class="btn btn-brand">
+          <i class="bi bi-clipboard-check"></i> Confirm Allocations
+        </button>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% else %}
+<!-- Helpful empty state -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="empty-state">
+      <div class="empty-icon"><i class="bi bi-cpu"></i></div>
+      <h5>No recommendations to show right now</h5>
+      <p>The engine found no eligible donation&ndash;request pairs. Either every request is
+         already fulfilled, or no donation passes the rules (expired items, category
+         mismatches or items outside the safety window).</p>
+      <a href="{{ url_for('dashboard') }}" class="btn btn-brand btn-sm">
+        <i class="bi bi-speedometer2"></i> Back to dashboard
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Pairs rejected by the rules (Rule 1 / Rule 3) -->
+{% if skipped %}
+<div class="card">
+  <div class="card-header">
+    <i class="bi bi-slash-circle"></i> Pairs Rejected by the Rules
+    <span class="card-sub">{{ skipped|length }} pair{{ 's' if skipped|length != 1 }} &middot; shown for transparency</span>
+  </div>
+  <div class="card-body">
+    <div class="rejected-list">
+      {% for s in skipped %}
+      <div class="rejected-item">
+        <div class="rejected-route">
+          {{ s.donation }} <span class="arrow">&rarr;</span> {{ s.request }}
+        </div>
+        <ul>
+          {% for reason in s.reasons %}<li>{{ reason }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

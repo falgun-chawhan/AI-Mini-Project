@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Allocation History - Smart Donation Distribution{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2><i class="bi bi-clipboard-check text-brand"></i> Allocation History</h2>
+    <p class="page-sub">Every confirmed allocation, with the rules that justified it.</p>
+  </div>
+  <a href="{{ url_for('matching') }}" class="btn btn-outline-soft">
+    <i class="bi bi-cpu"></i> Run Smart Matching
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-header"><i class="bi bi-journal-text"></i> Confirmed Allocations
+    <span class="card-sub">{{ allocations|length }} record{{ 's' if allocations|length != 1 }}</span>
+  </div>
+  <div class="card-body p-0">
+    {% if allocations %}
+    <div class="table-responsive">
+      <table class="table mb-0 align-middle">
+        <thead>
+          <tr>
+            <th>ID</th><th>Donation item</th><th>Donor</th><th>Recipient</th>
+            <th>Qty</th><th>Date</th><th>Rules that justified the match</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for a in allocations %}
+          <tr>
+            <td class="table-id">{{ a.id }}</td>
+            <td>{{ a.donation_item }}
+              <span class="cell-sub">{{ a.donation_item }} &middot; urgency {{ a.urgency }}</span></td>
+            <td>{{ a.donor_name }}</td>
+            <td>{{ a.recipient_name }}</td>
+            <td class="table-qty">{{ a.quantity }}</td>
+            <td>{{ a.allocation_date }}</td>
+            <td>
+              <details class="rule-details" style="border:0;background:transparent">
+                <summary style="padding:.25rem 0">
+                  <span class="chev"><i class="bi bi-chevron-right"></i></span>
+                  {{ a.reasons.split(' | ')|length }} rule{{ 's' if a.reasons.split(' | ')|length != 1 }}
+                </summary>
+                <ul class="rule-list" style="padding:.15rem 0 .5rem 1.1rem;list-style:disc">
+                  {% for reason in a.reasons.split(' | ') %}
+                    <li style="display:list-item"><span>{{ reason }}</span></li>
+                  {% endfor %}
+                </ul>
+              </details>
+            </td>
+            <td><span class="badge badge-status-{{ a.status }}">{{ a.status }}</span></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon"><i class="bi bi-clipboard-check"></i></div>
+      <h5>No allocations confirmed yet</h5>
+      <p>Run the Smart Matching engine, review the recommendations and confirm them
+         &mdash; every confirmed pair will appear here with its justification.</p>
+      <a href="{{ url_for('matching') }}" class="btn btn-brand btn-sm">
+        <i class="bi bi-cpu"></i> Run Smart Matching
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

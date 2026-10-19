@@ -1,0 +1,150 @@
+# Project: Smart Donation Distribution System
+## SPPU Third Year Computer Engineering — AI Laboratory Mini-Project
+
+Build a complete, beginner-friendly Python web application called **Smart Donation Distribution System** for the Social and Community Services domain.
+
+### 1. Technology requirements
+- Python for the backend.
+- Flask as the local web framework.
+- HTML, CSS and Bootstrap for the user interface.
+- SQLite for persistent local storage.
+- Jinja2 templates for rendering pages.
+- No React, Node.js, machine learning, external AI APIs, cloud services or paid dependencies.
+- The application must run locally on my computer and open in a browser at `http://127.0.0.1:5000`.
+- Do not deploy or host the application online.
+
+### 2. Main purpose
+The system helps a charity organization distribute donated essential items to people or community organizations that need them.
+
+It must maintain donation records, community requests, and a rule-based engine that recommends which donations should be allocated to which requests.
+
+### 3. Dashboard
+Create a clean, modern charity administration dashboard containing:
+- Total donations received.
+- Pending community requests.
+- Successful donation allocations.
+- Unallocated available items.
+- Recent donations and requests.
+- A prominent button to run the smart matching engine.
+
+Use a professional purple and white theme inspired by modern charity management dashboards. Keep the interface simple and easy to demonstrate during a college practical examination.
+
+### 4. Donation management
+Create a form to add a donation with:
+- Donor name.
+- Item category: Food, Clothes, Books, Medicines or Other Essentials.
+- Item name and description.
+- Quantity.
+- Expiry date, where applicable.
+- Condition or usability.
+- Availability status.
+
+Allow users to view all donations in a table and see whether each donation is available, partially allocated or fully allocated.
+
+### 5. Community request management
+Create a form to register requests with:
+- Recipient or organization name.
+- Item category required.
+- Item name or requirement description.
+- Quantity required.
+- Urgency: Critical, High, Medium or Low.
+- Number of beneficiaries.
+- Request date.
+- Request status.
+
+Allow users to view, search and filter requests.
+
+### 6. Rule-based AI matching engine
+This is the most important part of the project.
+
+Implement a separate Python module called `rule_engine.py`. It must use explicit IF–THEN rules, not machine learning or an external AI API.
+
+Implement these rules:
+
+RULE 1 — CATEGORY MATCH:
+IF a donation's category matches a community request's category AND the items are compatible, THEN the pair is eligible for matching.
+
+RULE 2 — URGENCY PRIORITY:
+IF a request is Critical or High priority, THEN rank it ahead of compatible lower-priority requests, all else being equal.
+
+RULE 3 — EXPIRY SAFETY:
+IF a donation has an expiry date and has expired, THEN prevent allocation. For perishable food, also reject items that cannot safely be distributed within the applicable safety window. Do not allocate medicines automatically; mark them for authorized verification.
+
+RULE 4 — QUANTITY CHECK:
+IF available donation quantity is greater than zero AND request quantity remains unfulfilled, THEN allocate no more than the available donation quantity or remaining requested quantity.
+
+RULE 5 — BENEFICIARY PRIORITY:
+IF two eligible requests have the same urgency, THEN prioritize the request serving more beneficiaries.
+
+RULE 6 — EXPLANATION:
+For every recommended allocation, display the exact reasons why the request was selected, such as category compatibility, urgency level and quantity availability.
+
+The matching engine must:
+- Evaluate all eligible donation-request pairs.
+- Rank compatible requests deterministically.
+- Prevent double allocation and over-allocation.
+- Update quantities and statuses correctly.
+- Never allocate expired items.
+- Support partial fulfilment.
+- Keep an allocation history.
+- Use a database transaction so failed allocations do not leave incorrect quantities.
+- Clearly distinguish a recommendation from a confirmed allocation.
+
+When the administrator clicks "Run Smart Matching", show the recommended donation-request pairs and their reasoning. Require the administrator to confirm before saving allocations.
+
+### 7. Allocation management
+Create a page showing:
+- Donation item.
+- Donor.
+- Recipient.
+- Quantity allocated.
+- Allocation date.
+- Rules that justified the match.
+- Allocation status.
+
+Update remaining donation quantities and outstanding request quantities automatically after confirmation.
+
+### 8. Sample data
+Provide a button to load realistic demonstration data:
+- At least 8 donations.
+- At least 8 community requests.
+- Different categories, quantities and urgency levels.
+- Include at least one expired item and one partial-fulfilment scenario.
+
+Clearly label the records as demo data. Prevent the sample-data button from duplicating records on every click.
+
+### 9. Project structure
+Organize the project into separate files, including:
+- `app.py`
+- `rule_engine.py`
+- `database.py`
+- `templates/`
+- `static/css/style.css`
+- `requirements.txt`
+- `README.md`
+
+Use clean, readable Python code with comments that a third-year engineering student can explain during a viva.
+
+### 10. Reliability and security
+- Validate all user inputs on the server.
+- Use parameterized SQL queries.
+- Handle missing or invalid data gracefully.
+- Prevent negative quantities.
+- Validate dates and category compatibility.
+- Add basic protection against accidental duplicate submissions.
+- Do not use real personal or medical data.
+
+### 11. Deliverables
+Generate all required source files and a README containing:
+1. Prerequisites.
+2. Installation instructions.
+3. How to create a virtual environment.
+4. How to install dependencies.
+5. How to initialize the database.
+6. The command to run the application.
+7. The local browser URL.
+8. A brief explanation of the rule-based inference engine.
+
+Do not provide only a mockup or a single HTML page. Implement the actual working application with functional forms, persistent storage and real matching logic.
+
+Before finishing, check that all imports, routes, templates and database operations work together. Fix errors rather than leaving TODO placeholders. Keep the application beginner-friendly and suitable for a college AI laboratory demonstration.

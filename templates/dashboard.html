@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Smart Donation Distribution{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2><i class="bi bi-speedometer2 text-brand"></i> Dashboard</h2>
+    <p class="page-sub">Overview of donations, community requests and confirmed allocations.</p>
+  </div>
+  <a href="{{ url_for('matching') }}" class="btn btn-brand">
+    <i class="bi bi-cpu"></i> Run Smart Matching
+  </a>
+</div>
+
+<!-- Sample data banner -->
+<div class="demo-banner mb-4">
+  <div class="demo-copy">
+    <strong>Sample data for the demonstration</strong>
+    <span>Demo records are labelled with a DEMO badge and can be removed at any time.</span>
+  </div>
+  <div class="demo-actions">
+    <form method="post" action="{{ url_for('demo_load') }}">
+      <input type="hidden" name="dummy" value="1">
+      <button class="btn btn-brand btn-sm" type="submit">
+        <i class="bi bi-database-add"></i> Load Demo Data
+      </button>
+    </form>
+    <form method="post" action="{{ url_for('demo_clear') }}">
+      <input type="hidden" name="dummy" value="1">
+      <button class="btn btn-outline-soft btn-sm" type="submit">
+        <i class="bi bi-trash"></i> Clear Demo Data
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Statistic cards (Section 3 of the brief) -->
+<div class="row g-3 mb-4">
+  <div class="col-md-6 col-xl-3">
+    <div class="card stat-card">
+      <div class="stat-icon"><i class="bi bi-gift"></i></div>
+      <div>
+        <div class="stat-value">{{ stats.total_donations }}</div>
+        <div class="stat-label">Total donations received
+          &middot; {{ stats.total_quantity }} units</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 col-xl-3">
+    <div class="card stat-card">
+      <div class="stat-icon tone-amber"><i class="bi bi-people"></i></div>
+      <div>
+        <div class="stat-value">{{ stats.pending_requests }}</div>
+        <div class="stat-label">Pending community requests</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 col-xl-3">
+    <div class="card stat-card">
+      <div class="stat-icon tone-green"><i class="bi bi-clipboard-check"></i></div>
+      <div>
+        <div class="stat-value">{{ stats.successful_allocations }}</div>
+        <div class="stat-label">Successful allocations
+          &middot; {{ stats.allocated_quantity }} units</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 col-xl-3">
+    <div class="card stat-card">
+      <div class="stat-icon tone-red"><i class="bi bi-box-seam"></i></div>
+      <div>
+        <div class="stat-value">{{ stats.unallocated_items }}</div>
+        <div class="stat-label">Unallocated available items
+          &middot; {{ stats.unallocated_quantity }} units</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent activity -->
+<div class="row g-4">
+  <!-- Recent donations -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-gift"></i> Recent Donations
+        <span class="card-sub">last 5</span></div>
+      <div class="card-body p-0">
+        {% if recent_donations %}
+        <div class="table-responsive">
+          <table class="table mb-0 align-middle">
+            <thead><tr><th>Item</th><th>Donor</th><th>Qty</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for d in recent_donations %}
+              <tr>
+                <td>{{ d.item_name }}
+                  {% if d.is_demo %}<span class="badge badge-demo">DEMO</span>{% endif %}
+                  <span class="cell-sub">{{ d.category }}</span></td>
+                <td>{{ d.donor_name }}</td>
+                <td class="table-qty">{{ d.available_quantity }}/{{ d.quantity }}</td>
+                <td><span class="badge badge-status-{{ d.status }}">{{ d.status }}</span></td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <div class="empty-icon"><i class="bi bi-gift"></i></div>
+          <h5>No donations yet</h5>
+          <p>Add the first donation from the Donations page, or load the sample
+             data to see the dashboard in action.</p>
+          <a href="{{ url_for('donations') }}" class="btn btn-brand btn-sm">
+            <i class="bi bi-plus-circle"></i> Add a donation
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent requests -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-people"></i> Recent Requests
+        <span class="card-sub">last 5</span></div>
+      <div class="card-body p-0">
+        {% if recent_requests %}
+        <div class="table-responsive">
+          <table class="table mb-0 align-middle">
+            <thead><tr><th>Item</th><th>Organization</th><th>Urgency</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for r in recent_requests %}
+              <tr>
+                <td>{{ r.item_name }}
+                  {% if r.is_demo %}<span class="badge badge-demo">DEMO</span>{% endif %}
+                  <span class="cell-sub">{{ r.category }}</span></td>
+                <td>{{ r.recipient_name }}</td>
+                <td><span class="badge badge-urgency-{{ r.urgency }}">{{ r.urgency }}</span></td>
+                <td><span class="badge badge-status-{{ r.status }}">{{ r.status }}</span></td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <div class="empty-icon"><i class="bi bi-people"></i></div>
+          <h5>No community requests yet</h5>
+          <p>Register a request so the rule engine has something to match
+             donations against.</p>
+          <a href="{{ url_for('community_requests') }}" class="btn btn-brand btn-sm">
+            <i class="bi bi-plus-circle"></i> Register a request
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

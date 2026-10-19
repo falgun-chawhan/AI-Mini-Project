@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}Community Requests - Smart Donation Distribution{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2><i class="bi bi-people text-brand"></i> Community Requests</h2>
+    <p class="page-sub">What community organizations need, with urgency and beneficiary counts.</p>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Register request form (Section 5) -->
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-plus-circle"></i> Register Request</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('requests_new') }}">
+          <input type="hidden" name="form_token" value="{{ form_token }}">
+
+          <div class="form-group">
+            <label class="form-label" for="recipient_name">Recipient / organization name <span class="req">*</span></label>
+            <input type="text" id="recipient_name" name="recipient_name" class="form-control"
+                   required maxlength="120" placeholder="e.g. Hope Orphanage">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="category">Item category required <span class="req">*</span></label>
+            <select id="category" name="category" class="form-select" required>
+              <option value="" disabled selected>&mdash; select a category &mdash;</option>
+              {% for c in categories %}<option>{{ c }}</option>{% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="item_name">Item name / requirement <span class="req">*</span></label>
+            <input type="text" id="item_name" name="item_name" class="form-control"
+                   required maxlength="120" placeholder="e.g. Winter Jackets">
+            <div class="form-text">The engine matches this with compatible donations (Rule 1).</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="quantity">Quantity required <span class="req">*</span></label>
+            <input type="number" id="quantity" name="quantity" class="form-control"
+                   min="1" required placeholder="e.g. 40">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="urgency">Urgency <span class="req">*</span></label>
+            <select id="urgency" name="urgency" class="form-select" required>
+              <option value="" disabled selected>&mdash; select urgency &mdash;</option>
+              {% for u in urgencies %}<option>{{ u }}</option>{% endfor %}
+            </select>
+            <div class="form-text">Critical and High are ranked first (Rule 2).</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="beneficiaries">Number of beneficiaries <span class="req">*</span></label>
+            <input type="number" id="beneficiaries" name="beneficiaries" class="form-control"
+                   min="1" required placeholder="e.g. 80">
+            <div class="form-text">Breaks ties between equally urgent requests (Rule 5).</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="request_date">Request date <span class="req">*</span></label>
+            <input type="date" id="request_date" name="request_date" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="status_display">Request status</label>
+            <input type="text" id="status_display" class="form-control" value="pending" disabled>
+            <div class="form-text">Updates automatically after allocations are confirmed.</div>
+          </div>
+
+          <button type="submit" class="btn btn-brand w-100">
+            <i class="bi bi-check2-circle"></i> Save Request
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search, filter and table -->
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-search"></i> Search &amp; Filter
+        <span class="card-sub">{{ requests|length }} matching record{{ 's' if requests|length != 1 }}</span>
+      </div>
+      <div class="card-body">
+        <form method="get" action="{{ url_for('community_requests') }}" class="row g-2">
+          <div class="col-md-4">
+            <label class="visually-hidden" for="q">Search</label>
+            <input type="text" id="q" name="q" class="form-control"
+                   placeholder="Search organization or item&hellip;" value="{{ search }}">
+          </div>
+          <div class="col-md-3">
+            <label class="visually-hidden" for="filter_category">Category</label>
+            <select id="filter_category" name="category" class="form-select">
+              <option value="">All categories</option>
+              {% for c in categories %}
+                <option {% if c == selected_category %}selected{% endif %}>{{ c }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="visually-hidden" for="filter_urgency">Urgency</label>
+            <select id="filter_urgency" name="urgency" class="form-select">
+              <option value="">All urgency</option>
+              {% for u in urgencies %}
+                <option {% if u == selected_urgency %}selected{% endif %}>{{ u }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="visually-hidden" for="filter_status">Status</label>
+            <select id="filter_status" name="status" class="form-select">
+              <option value="">All status</option>
+              {% for s in ['pending', 'partially_fulfilled', 'fulfilled'] %}
+                <option {% if s == selected_status %}selected{% endif %}>{{ s }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-1">
+            <button class="btn btn-brand w-100" type="submit">Go</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card-body p-0">
+        {% if requests %}
+        <div class="table-responsive">
+          <table class="table mb-0 align-middle">
+            <thead>
+              <tr>
+                <th>ID</th><th>Organization</th><th>Category</th><th>Item</th>
+                <th>Required</th><th>Remaining</th><th>Urgency</th>
+                <th>Beneficiaries</th><th>Date</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for r in requests %}
+              <tr>
+                <td class="table-id">{{ r.id }}</td>
+                <td>{{ r.recipient_name }}
+                  {% if r.is_demo %}<span class="badge badge-demo">DEMO</span>{% endif %}</td>
+                <td><span class="badge badge-category">{{ r.category }}</span></td>
+                <td>{{ r.item_name }}</td>
+                <td class="table-qty">{{ r.quantity_required }}</td>
+                <td class="table-qty">{{ r.quantity_remaining }}</td>
+                <td><span class="badge badge-urgency-{{ r.urgency }}">{{ r.urgency }}</span></td>
+                <td class="table-qty">{{ r.beneficiaries }}</td>
+                <td>{{ r.request_date }}</td>
+                <td><span class="badge badge-status-{{ r.status }}">{{ r.status }}</span></td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <div class="empty-icon"><i class="bi bi-funnel"></i></div>
+          <h5>No requests match these filters</h5>
+          <p>{% if search or selected_category or selected_urgency or selected_status %}
+               Try clearing the search box or choosing &ldquo;All&rdquo; in the dropdowns.
+             {% else %}
+               Register the first community request using the form on the left.
+             {% endif %}</p>
+          {% if search or selected_category or selected_urgency or selected_status %}
+          <a href="{{ url_for('community_requests') }}" class="btn btn-outline-soft btn-sm">
+            <i class="bi bi-arrow-counterclockwise"></i> Clear filters
+          </a>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

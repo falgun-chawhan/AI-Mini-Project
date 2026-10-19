@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Donations - Smart Donation Distribution{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2><i class="bi bi-gift text-brand"></i> Donations</h2>
+    <p class="page-sub">Record what donors give and track how much is still available.</p>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Add donation form (Section 4) -->
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-plus-circle"></i> Add Donation</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('donations_new') }}">
+          <input type="hidden" name="form_token" value="{{ form_token }}">
+
+          <div class="form-group">
+            <label class="form-label" for="donor_name">Donor name <span class="req">*</span></label>
+            <input type="text" id="donor_name" name="donor_name" class="form-control"
+                   required maxlength="120" placeholder="e.g. Sharma Family Trust">
+            <div class="form-text">Person or organization giving the items.</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="category">Item category <span class="req">*</span></label>
+            <select id="category" name="category" class="form-select" required>
+              <option value="" disabled selected>&mdash; select a category &mdash;</option>
+              <option>Food</option><option>Clothes</option><option>Books</option>
+              <option>Medicines</option><option>Other Essentials</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="item_name">Item name <span class="req">*</span></label>
+            <input type="text" id="item_name" name="item_name" class="form-control"
+                   required maxlength="120" placeholder="e.g. Basmati Rice">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="description">Description</label>
+            <textarea id="description" name="description" class="form-control" rows="2"
+                      maxlength="200" placeholder="e.g. 50 kg sealed bags for community kitchens"></textarea>
+            <div class="form-text">Optional details such as packing, brand or condition notes.</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="quantity">Quantity <span class="req">*</span></label>
+            <input type="number" id="quantity" name="quantity" class="form-control"
+                   min="1" required placeholder="e.g. 50">
+            <div class="form-text">Whole numbers only; negative values are rejected.</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="expiry_date">Expiry date</label>
+            <input type="date" id="expiry_date" name="expiry_date" class="form-control">
+            <div class="form-text">Leave empty for items that do not expire
+              (clothes, books&hellip;). Perishable food must have an expiry
+              date, and expired items are never allocated (Rule 3).</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="condition">Condition / usability <span class="req">*</span></label>
+            <select id="condition" name="condition" class="form-select" required>
+              <option value="" disabled selected>&mdash; select a condition &mdash;</option>
+              <option>New</option><option>Like New</option><option>Usable</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="status_display">Availability status</label>
+            <input type="text" id="status_display" class="form-control" value="available" disabled>
+            <div class="form-text">Set automatically: available &rarr; partially allocated
+              &rarr; fully allocated.</div>
+          </div>
+
+          <button type="submit" class="btn btn-brand w-100">
+            <i class="bi bi-check2-circle"></i> Save Donation
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- All donations table -->
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-list-ul"></i> All Donations
+        <span class="card-sub">{{ donations|length }} record{{ 's' if donations|length != 1 }}</span>
+      </div>
+      <div class="card-body p-0">
+        {% if donations %}
+        <div class="table-responsive">
+          <table class="table mb-0 align-middle">
+            <thead>
+              <tr>
+                <th>ID</th><th>Donor</th><th>Category</th><th>Item</th>
+                <th>Qty</th><th>Available</th><th>Expiry</th><th>Condition</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for d in donations %}
+              <tr>
+                <td class="table-id">{{ d.id }}</td>
+                <td>{{ d.donor_name }}
+                  {% if d.is_demo %}<span class="badge badge-demo">DEMO</span>{% endif %}</td>
+                <td><span class="badge badge-category">{{ d.category }}</span></td>
+                <td>{{ d.item_name }}
+                  {% if d.description %}<span class="cell-sub">{{ d.description }}</span>{% endif %}</td>
+                <td class="table-qty">{{ d.quantity }}</td>
+                <td class="table-qty">{{ d.available_quantity }}</td>
+                <td>{{ d.expiry_date or "&mdash;"|safe }}</td>
+                <td>{{ d.condition }}</td>
+                <td><span class="badge badge-status-{{ d.status }}">{{ d.status }}</span></td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <div class="empty-icon"><i class="bi bi-gift"></i></div>
+          <h5>No donations recorded yet</h5>
+          <p>Use the form on the left to add the first donation, or load the
+             sample data from the dashboard to explore the system.</p>
+          <a href="{{ url_for('dashboard') }}" class="btn btn-outline-soft btn-sm">
+            <i class="bi bi-database-add"></i> Go to demo data
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
